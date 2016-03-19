@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-
+from irc3.plugins.cron import cron
 import json
-
+import asyncio
 import irc3
 
 ### storage
@@ -45,7 +45,12 @@ class MyPlugin:
         self.idlemap.add(mask)
         for i in self.idlemap: print(i)
         
-
+    @cron('* * * * *')
+    @asyncio.coroutine
+    def updatescores(self):
+        names = yield from self.bot.async.names('#porno3003')
+        print(names)
+        print("hello")
 
 def main():
     config = dict(
@@ -53,8 +58,7 @@ def main():
         host='irc.elisa.fi', port=6667, ssl=False,
         includes=[
             'irc3.plugins.core',
-            'irc3.plugins.command',
-            'irc3.plugins.human',
+            'irc3.plugins.async',
             __name__,  # this register MyPlugin
         ]
     )
