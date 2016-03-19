@@ -33,6 +33,8 @@ class MyPlugin:
     def __init__(self, bot):
         self.bot = bot
         self.log = self.bot.log
+        self.idlemap  = set()
+        self.scoremap = {}
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
@@ -40,6 +42,10 @@ class MyPlugin:
         print(data)
         print(event)
         print(target)
+        self.idlemap.add(mask)
+        for i in self.idlemap: print(i)
+        
+
 
 def main():
     config = dict(
