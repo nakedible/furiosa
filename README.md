@@ -1,0 +1,2 @@
+# furiosa
+irc bot
