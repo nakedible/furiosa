@@ -19,7 +19,7 @@ def read_db(filename):
 def write_db(filename, val):
     try:
         with open(filename, 'w') as f:
-            json.dump(val, f, indent=2)
+            json.dump(val, f, indent=2, sort_keys=True)
             f.write('\n')
     except:
         import traceback
