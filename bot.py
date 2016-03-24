@@ -34,7 +34,7 @@ class MyPlugin:
     def __init__(self, bot):
         self.bot = bot
         self.log = self.bot.log
-        self.activeset  = set()
+        self.activeset = set()
         self.penalties = {}
 
     @irc3.event(irc3.rfc.PRIVMSG)
@@ -43,8 +43,7 @@ class MyPlugin:
         print(data)
         print(event)
         print(target)
-        nick = mask.split('!')[0]
-        self.activeset.add(nick)
+        self.activeset.add(mask.nick)
         for i in self.activeset: print(i)
         
     @cron('* * * * *')
@@ -52,6 +51,7 @@ class MyPlugin:
     def updatescores(self):
         names = yield from self.bot.async.names('#porno3003')
         for n in names['names']: self.update_penalties_for(n, self.activeset, self.penalties)
+        self.activeset = set()
         print(names)
         print("hello")
         print(self.penalties)
