@@ -28,13 +28,14 @@ def write_db(filename, val):
 
 ### bot
 
+
 @irc3.plugin
 class MyPlugin:
     def __init__(self, bot):
         self.bot = bot
         self.log = self.bot.log
-        self.idlemap  = set()
-        self.scoremap = {}
+        self.activeset  = set()
+        self.penalties = {}
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
@@ -42,20 +43,27 @@ class MyPlugin:
         print(data)
         print(event)
         print(target)
-        self.idlemap.add(mask)
-        for i in self.idlemap: print(i)
+        nick = mask.split('!')[0]
+        self.activeset.add(nick)
+        for i in self.activeset: print(i)
         
     @cron('* * * * *')
     @asyncio.coroutine
     def updatescores(self):
         names = yield from self.bot.async.names('#porno3003')
+        for n in names['names']: self.update_penalties_for(n, self.activeset, self.penalties)
         print(names)
         print("hello")
+        print(self.penalties)
+
+    def update_penalties_for(self, name, active_nicks, nick_penalties):
+        if name in active_nicks: nick_penalties[name] = 0
+        else: nick_penalties[name] = nick_penalties.get(name, 0) + 1
 
 def main():
     config = dict(
         nick='furiosaxx', autojoins=['#porno3003'],
-        host='irc.elisa.fi', port=6667, ssl=False,
+        host='localhost', port=6667, ssl=False,
         includes=[
             'irc3.plugins.core',
             'irc3.plugins.async',
