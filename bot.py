@@ -5,6 +5,13 @@ import asyncio, json, os
 import irc3
 from irc3.plugins.cron import cron
 
+BOT_CHANNEL = os.environ.get('BOT_CHANNEL', '#porno3003')
+BOT_SERVER = os.environ.get('BOT_SERVER', 'localhost')
+BOT_PORT = int(os.environ.get('BOT_PORT', '6667'))
+BOT_NICK = os.environ.get('BOT_NICK', 'furiosa')
+BOT_REALNAME = os.environ.get('BOT_REALNAME', 'imperator')
+BOT_USERINFO = os.environ.get('BOT_USERINFO', 'Imperator Furiosa')
+
 ### storage
 
 def read_db(filename):
@@ -50,7 +57,7 @@ class MyPlugin:
     @cron('* * * * *')
     @asyncio.coroutine
     def updatescores(self):
-        names = yield from self.bot.async.names('#porno3003')
+        names = yield from self.bot.async.names(BOT_CHANNEL)
         for n in names['names']: self.update_penalties_for(n, self.activeset, self.penalties)
         self.activeset = set()
         print(names)
@@ -63,8 +70,9 @@ class MyPlugin:
 
 def main():
     config = dict(
-        nick='furiosaxx', autojoins=['#porno3003'],
-        host='localhost', port=6667, ssl=False,
+        nick=BOT_NICK, realname=BOT_REALNAME, userinfo=BOT_USERINFO,
+        autojoins=[BOT_CHANNEL],
+        host=BOT_SERVER, port=BOT_PORT, ssl=False,
         includes=[
             'irc3.plugins.core',
             'irc3.plugins.async',
