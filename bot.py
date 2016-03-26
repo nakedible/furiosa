@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-from irc3.plugins.cron import cron
-import json
-import asyncio
+
+import asyncio, json, os
+
 import irc3
+from irc3.plugins.cron import cron
 
 ### storage
 
