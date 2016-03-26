@@ -60,9 +60,9 @@ class MyPlugin:
         if self.activeset:
             names = yield from self.bot.async.names(BOT_CHANNEL)
             for n in names['names']: self.update_penalties_for(self.canonnick(n), self.activeset, self.penalties)
+            self.kick_lurkers()
             self.activeset = set()
             print(names)
-            print("hello")
             print(self.penalties)
 
     def canonnick(self, nickname):
@@ -71,6 +71,11 @@ class MyPlugin:
     def update_penalties_for(self, name, active_nicks, nick_penalties):
         if name in active_nicks: nick_penalties[name] = 0
         else: nick_penalties[name] = nick_penalties.get(name, 0) + 1
+
+    def kick_lurkers(self):
+        for name in self.penalties:
+            if self.penalties[name] > 2 and name != 'furiosa': 
+                self.bot.kick(BOT_CHANNEL, name, 'moimoi')
 
 def main():
     config = dict(
