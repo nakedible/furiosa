@@ -36,6 +36,22 @@ def write_db(filename, val):
 
 ### bot
 
+from random import random, choice
+
+def random_qualifier():
+    return choice(('hyvin', 'melko', 'toisinaan', 'vastavuoroisen'))
+
+def random_attribute():
+    if random() > 0.6: return random_qualifier() + ' ' + random_attribute()
+    return choice(('ihanista', 'punaisista', 'poliittisista', 'turhista'))
+
+def random_thing():
+    if random() > 0.7: return random_thing() + ' ja ' + random_thing()
+    if random() > 0.6: return random_attribute() + ' ' + random_thing()
+    return choice(('pupuista', 'tytöistä', 'pojista', 'bileistä'))
+
+def random_message():
+    return "Olisit puhunut " + random_thing()
 
 @irc3.plugin
 class MyPlugin:
@@ -75,8 +91,8 @@ class MyPlugin:
 
     def kick_lurkers(self):
         for name in self.penalties:
-            if self.penalties[name] > 2 and name != 'furiosa': 
-                self.bot.kick(BOT_CHANNEL, name, 'moimoi')
+            if self.penalties[name] > 100 and name not in self.dontkick: 
+                self.bot.kick(BOT_CHANNEL, name, random_message())
 
 def main():
     config = dict(
