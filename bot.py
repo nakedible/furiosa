@@ -52,17 +52,18 @@ class MyPlugin:
         print(event)
         print(target)
         self.activeset.add(mask.nick)
-        for i in self.activeset: print(i)
+        print(self.activeset)
         
     @cron('* * * * *')
     @asyncio.coroutine
     def updatescores(self):
-        names = yield from self.bot.async.names(BOT_CHANNEL)
-        for n in names['names']: self.update_penalties_for(self.canonnick(n), self.activeset, self.penalties)
-        self.activeset = set()
-        print(names)
-        print("hello")
-        print(self.penalties)
+        if self.activeset:
+            names = yield from self.bot.async.names(BOT_CHANNEL)
+            for n in names['names']: self.update_penalties_for(self.canonnick(n), self.activeset, self.penalties)
+            self.activeset = set()
+            print(names)
+            print("hello")
+            print(self.penalties)
 
     def canonnick(self, nickname):
         return nickname.lstrip('@+').lower()
