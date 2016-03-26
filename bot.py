@@ -44,6 +44,7 @@ class MyPlugin:
         self.log = self.bot.log
         self.activeset = set()
         self.penalties = {}
+        self.dontkick = set(('furiosa', 'varpushaukka'))
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
