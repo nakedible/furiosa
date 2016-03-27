@@ -48,7 +48,7 @@ def random_attribute():
 def random_thing():
     if random() > 0.7: return random_thing() + ' ja ' + random_thing()
     if random() > 0.6: return random_attribute() + ' ' + random_thing()
-    return choice(('pupuista', 'tytöistä', 'pojista', 'bileistä'))
+    return choice(('pupuista', 'tytöistä', 'pojista', 'kurkuista'))
 
 def random_message():
     return "Olisit puhunut " + random_thing()
@@ -60,7 +60,7 @@ class MyPlugin:
         self.log = self.bot.log
         self.activeset = set()
         self.penalties = {}
-        self.dontkick = set(('furiosa', 'varpushaukka'))
+        self.dontkick = set((self.bot.nick, 'varpushaukka'))
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
@@ -70,6 +70,7 @@ class MyPlugin:
         print(target)
         self.activeset.add(mask.nick)
         print(self.activeset)
+        print(self.bot.nick)
         
     @cron('* * * * *')
     @asyncio.coroutine
@@ -91,7 +92,7 @@ class MyPlugin:
 
     def kick_lurkers(self):
         for name in self.penalties:
-            if self.penalties[name] > 100 and name not in self.dontkick: 
+            if self.penalties[name] > 1 and name not in self.dontkick: 
                 self.bot.kick(BOT_CHANNEL, name, random_message())
 
 def main():
