@@ -30,7 +30,7 @@ class DynamoStorage(object):
         if ret is None:
             return {}
         else:
-            return ret.get('penalties', {})
+            return ret['Item'].get('penalties', {})
 
     def save_penalties(self, penalties):
         self.table.put_item(Item={
