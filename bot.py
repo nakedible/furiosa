@@ -60,7 +60,7 @@ class MyPlugin:
         self.log = self.bot.log
         self.activeset = set()
         self.penalties = {}
-        self.dontkick = set((self.bot.nick, 'varpushaukka'))
+        self.dontkick = set((self.bot.nick, 'varpushaukka', 'naked'))
         # XXX: reuses same handler, mucks about in internals, but we
         # just want SIGTERM to be handled too
         self.bot.loop.add_signal_handler(signal.SIGTERM, self.bot.SIGINT)
