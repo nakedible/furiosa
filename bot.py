@@ -21,7 +21,7 @@ BOT_STATE_FILE = os.environ.get('BOT_STATE_FILE')
 class DynamoStorage(object):
     def __init__(self):
         self.dynamodb = boto3.resource('dynamodb')
-        self.table = dynamodb.Table(BOT_DYNAMODB_TABLE)
+        self.table = self.dynamodb.Table(BOT_DYNAMODB_TABLE)
 
     def load_penalties(self):
         ret = self.table.get_item(Key={
