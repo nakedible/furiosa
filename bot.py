@@ -26,7 +26,7 @@ class DynamoStorage(object):
     def load_penalties(self):
         ret = self.table.get_item(Key={
             'id': 'penalties'
-        })
+        }, ConsistentRead=True)
         if ret is None:
             return {}
         else:
