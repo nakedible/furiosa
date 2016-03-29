@@ -5,46 +5,74 @@ import asyncio, json, os, signal
 import irc3
 from irc3.plugins.cron import cron
 
+import boto3
+
 BOT_CHANNEL = os.environ.get('BOT_CHANNEL', '#porno3003')
 BOT_SERVER = os.environ.get('BOT_SERVER', 'localhost')
 BOT_PORT = int(os.environ.get('BOT_PORT', '6667'))
 BOT_NICK = os.environ.get('BOT_NICK', 'furiosa')
 BOT_REALNAME = os.environ.get('BOT_REALNAME', 'imperator')
 BOT_USERINFO = os.environ.get('BOT_USERINFO', 'Imperator Furiosa')
+BOT_DYNAMODB_TABLE = os.environ.get('BOT_DYNAMODB_TABLE')
+BOT_STATE_FILE = os.environ.get('BOT_STATE_FILE')
 
 ### storage
 
-def bototest():
-    import boto3
-    BOT_DYNAMODB_TABLE = os.environ['BOT_DYNAMODB_TABLE']
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(BOT_DYNAMODB_TABLE)
-    table.put_item(Item={
-        'id': 'penalties',
-        'penalties': {
-            'foo': 1
-        }
-    })
+class DynamoStorage(object):
+    def __init__(self):
+        self.dynamodb = boto3.resource('dynamodb')
+        self.table = dynamodb.Table(BOT_DYNAMODB_TABLE)
 
-def read_db(filename):
-    try:
-        with open(filename) as f:
-            return json.load(f)
-    except:
-        import traceback
-        traceback.print_exc()
-        print('failed to read db, starting with empty')
-        return {}
+    def load_penalties(self):
+        ret = self.table.get_item(Key={
+            'id': 'penalties'
+        })
+        if ret is None:
+            return {}
+        else:
+            return ret
 
-def write_db(filename, val):
-    try:
-        with open(filename, 'w') as f:
-            json.dump(val, f, indent=2, sort_keys=True)
-            f.write('\n')
-    except:
-        import traceback
-        traceback.print_exc()
-        print('failed to write state file, ignoring error')
+    def save_penalties(self, penalties):
+        self.table.put_item(Item={
+            'id': 'penalties',
+            'penalties': penalties
+        })
+
+class FileStorage(object):
+    def __init__(self):
+        self.filename = BOT_STATE_FILE
+
+    def load_penalties(self):
+        try:
+            with open(self.filename) as f:
+                return json.load(f)
+        except:
+            import traceback
+            traceback.print_exc()
+            print('failed to read state file, returning empty')
+            return {}
+
+    def save_penalties(self, penalties):
+        try:
+            with open(self.filename, 'w') as f:
+                json.dump(penalties, f, indent=2, sort_keys=True)
+                f.write('\n')
+        except:
+            import traceback
+            traceback.print_exc()
+            print('failed to write state file, ignoring error')
+
+class MemoryStorage(object):
+    def __init__(self):
+        self.penalties = {}
+
+    def load_penalties(self):
+        # XXX: should deep copy to be safe
+        return self.penalties
+
+    def save_penalties(self, penalties):
+        # XXX: should deep copy to be safe
+        self.penalties = penalties
 
 ### bot
 
