@@ -104,6 +104,12 @@ class MyPlugin:
         # XXX: reuses same handler, mucks about in internals, but we
         # just want SIGTERM to be handled too
         self.bot.loop.add_signal_handler(signal.SIGTERM, self.bot.SIGINT)
+        if BOT_DYNAMODB_TABLE is not None:
+            self.storage = DynamoStorage()
+        elif BOT_STATE_FILE is not None:
+            self.storage = FileStorage()
+        else:
+            self.storage = MemoryStorage()
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
