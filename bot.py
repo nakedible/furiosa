@@ -97,7 +97,7 @@ class MyPlugin:
         self.log = self.bot.log
         self.activeset = set()
         self.penalties = {}
-        self.dontkick = set((self.bot.nick, 'varpushaukka', 'naked'))
+        self.dontkick = set(('varpushaukka', 'naked'))
         # XXX: reuses same handler, mucks about in internals, but we
         # just want SIGTERM to be handled too
         self.bot.loop.add_signal_handler(signal.SIGTERM, self.bot.SIGINT)
@@ -140,8 +140,12 @@ class MyPlugin:
 
     def kick_lurkers(self):
         for name in self.penalties:
-            if self.penalties[name] > 1 and name not in self.dontkick: 
+            if self.penalties[name] > 1 and self.safe_kick(name): 
                 self.bot.kick(BOT_CHANNEL, name, random_message())
+
+    def safe_kick(self, nick):
+        if nick == self.bot.nick or nick in self.dontkick: return False
+        return True
 
 def main():
     print('connecting to {}:{}'.format(BOT_SERVER, BOT_PORT))
