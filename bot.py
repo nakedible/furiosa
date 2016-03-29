@@ -14,6 +14,18 @@ BOT_USERINFO = os.environ.get('BOT_USERINFO', 'Imperator Furiosa')
 
 ### storage
 
+def bototest():
+    import boto3
+    BOT_DYNAMODB_TABLE = os.environ['BOT_DYNAMODB_TABLE']
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(BOT_DYNAMODB_TABLE)
+    table.put_item(Item={
+        'id': 'penalties',
+        'penalties': {
+            'foo': 1
+        }
+    })
+
 def read_db(filename):
     try:
         with open(filename) as f:
@@ -99,6 +111,8 @@ class MyPlugin:
                 self.bot.kick(BOT_CHANNEL, name, random_message())
 
 def main():
+    if 'BOT_DYNAMODB_TABLE' in os.environ():
+        bototest()
     print('connecting to {}:{}'.format(BOT_SERVER, BOT_PORT))
     config = dict(
         nick=BOT_NICK, realname=BOT_REALNAME, userinfo=BOT_USERINFO,
