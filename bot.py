@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import asyncio, json, os
+import asyncio, json, os, signal
 
 import irc3
 from irc3.plugins.cron import cron
@@ -61,6 +61,9 @@ class MyPlugin:
         self.activeset = set()
         self.penalties = {}
         self.dontkick = set((self.bot.nick, 'varpushaukka'))
+        # XXX: reuses same handler, mucks about in internals, but we
+        # just want SIGTERM to be handled too
+        self.bot.loop.add_signal_handler(signal.SIGTERM, self.bot.SIGINT)
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
