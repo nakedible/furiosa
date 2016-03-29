@@ -114,7 +114,7 @@ class MyPlugin:
         print(data)
         print(event)
         print(target)
-        self.activeset.add(mask.nick)
+        self.activeset.add(self.canonnick(mask.nick))
         print(self.activeset)
         print(self.bot.nick)
         
