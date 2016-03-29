@@ -145,8 +145,6 @@ class MyPlugin:
                 self.bot.kick(BOT_CHANNEL, name, random_message())
 
 def main():
-    if 'BOT_DYNAMODB_TABLE' in os.environ and 'AWS_DEFAULT_REGION' in os.environ:
-        bototest()
     print('connecting to {}:{}'.format(BOT_SERVER, BOT_PORT))
     config = dict(
         nick=BOT_NICK, realname=BOT_REALNAME, userinfo=BOT_USERINFO,
