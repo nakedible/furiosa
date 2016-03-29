@@ -27,10 +27,7 @@ class DynamoStorage(object):
         ret = self.table.get_item(Key={
             'id': 'penalties'
         }, ConsistentRead=True)
-        if ret is None:
-            return {}
-        else:
-            return ret['Item'].get('penalties', {})
+        return ret.get('Item', {}).get('penalties', {})
 
     def save_penalties(self, penalties):
         self.table.put_item(Item={
