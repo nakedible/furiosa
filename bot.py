@@ -126,7 +126,9 @@ class MyPlugin:
     def updatescores(self):
         if self.activeset:
             names = yield from self.bot.async.names(BOT_CHANNEL)
+            self.penalties = self.storage.load_penalties()
             for n in names['names']: self.update_penalties_for(self.canonnick(n), self.activeset, self.penalties)
+            self.storage.save_penalties(self.penalties)
             self.kick_lurkers()
             self.activeset = set()
             print(names)
