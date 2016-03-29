@@ -96,6 +96,7 @@ class MyPlugin:
                 self.bot.kick(BOT_CHANNEL, name, random_message())
 
 def main():
+    print('connecting to {}:{}'.format(BOT_SERVER, BOT_PORT))
     config = dict(
         nick=BOT_NICK, realname=BOT_REALNAME, userinfo=BOT_USERINFO,
         autojoins=[BOT_CHANNEL],
