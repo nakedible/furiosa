@@ -17,6 +17,7 @@ BOT_DYNAMODB_TABLE = os.environ.get('BOT_DYNAMODB_TABLE')
 BOT_STATE_FILE = os.environ.get('BOT_STATE_FILE')
 BOT_KICK_LIMIT = os.environ.get('BOT_KICK_LIMIT', 100)
 BOT_KICK_CRON = os.environ.get('BOT_KICK_CRON', '* * * * *')
+BOT_DONT_KICK = os.environ.get('BOT_DONT_KICK', 'naked,varpushaukka')
 
 ### storage
 
@@ -99,7 +100,7 @@ class MyPlugin:
         self.log = self.bot.log
         self.activeset = set()
         self.penalties = {}
-        self.dontkick = set(('varpushaukka', 'naked'))
+        self.dontkick = set(BOT_DONT_KICK.lower().split(','))
         # XXX: reuses same handler, mucks about in internals, but we
         # just want SIGTERM to be handled too
         self.bot.loop.add_signal_handler(signal.SIGTERM, self.bot.SIGINT)
