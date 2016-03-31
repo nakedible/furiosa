@@ -1,0 +1,389 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "KeyName": {
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the ECS instances"
+        },
+        "InstanceType": {
+            "Description": "The EC2 instance type",
+            "Type": "String",
+            "Default": "t2.nano",
+            "ConstraintDescription": "must be a valid EC2 instance type."
+        },
+        "SSHLocation": {
+            "Description": " The IP address range that can be used to SSH to the EC2 instances",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+        },
+        "BotImage": {
+            "Description": "IRC bot docker image name and version",
+            "Type": "String",
+            "Default": "nakedible/furiosa:latest"
+        },
+        "IrcServer": {
+            "Description": "IRC server to connect to",
+            "Type": "String",
+            "Default": "open.ircnet.net"
+        },
+        "IrcPort": {
+            "Description": "IRC server port to connect to",
+            "Type": "Number",
+            "Default": "6667"
+        },
+        "IrcChannel": {
+            "Description": "IRC channel to join",
+            "Type": "String",
+            "Default": "#furiosaidles"
+        },
+        "IrcNick": {
+            "Description": "IRC nickname to use",
+            "Type": "String",
+            "Default": "furiosa"
+        },
+        "IrcRealName": {
+            "Description": "IRC real name to use",
+            "Type": "String",
+            "Default": "imperator"
+        },
+        "IrcUserInfo": {
+            "Description": "IRC user info to use",
+            "Type": "String",
+            "Default": "Imperator Furiosa"
+        },
+        "KickLimit": {
+            "Description": "Limit on idle periods after which a person is kicked",
+            "Type": "Number",
+            "Default": "100"
+        },
+        "KickCron": {
+            "Description": "Cron expression for running kick checks",
+            "Type": "String",
+            "Default": "0 * * * *"
+        },
+        "DontKick": {
+            "Description": "List of nicks that are never kicked",
+            "Type": "CommaDelimitedList",
+            "Default": ""
+        }
+    },
+
+    "Mappings": {
+        "AWSRegionToAMI": {
+            "us-east-1": {"AmiId": "ami-33b48a59"},
+            "us-west-1": {"AmiId": "ami-26f78746"},
+            "us-west-2": {"AmiId": "ami-65866a05"},
+            "eu-west-1": {"AmiId": "ami-77ab1504"},
+            "eu-central-1": {"AmiId": "ami-341efb5b"},
+            "ap-northeast-1": {"AmiId": "ami-b3afa2dd"},
+            "ap-southeast-1": {"AmiId": "ami-0cb0786f"},
+            "ap-southeast-2": {"AmiId": "ami-cf6342ac"}
+        }
+    },
+
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": "10.0.0.0/16",
+                "EnableDnsSupport": "true",
+                "EnableDnsHostnames": "true"
+            }
+        },
+
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {}
+        },
+        
+        "InternetGatewayAttachment": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": { "Ref": "VPC" },
+                "InternetGatewayId": { "Ref": "InternetGateway" }
+            }
+        },
+
+        "SubnetPublic": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": { "Ref": "VPC" },
+                "CidrBlock": "10.0.0.0/24"
+            }
+        },
+        
+        "RouteTablePublic": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": { "Ref": "VPC" }
+            }
+        },
+        
+        "RoutePublic": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "RouteTableId": { "Ref": "RouteTablePublic" },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": { "Ref": "InternetGateway" }
+            }
+        },
+        
+        "SubnetRouteTableAssociationPublic": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": { "Ref": "SubnetPublic" },
+                "RouteTableId": { "Ref": "RouteTablePublic" }
+            }
+        },
+        
+        "ServerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "xxx",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "SSHLocation" } }
+                ]
+            }
+        },
+
+        "EcsCluster": {
+            "Type": "AWS::ECS::Cluster"
+        },
+        
+        "AutoScalingGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "VPCZoneIdentifier": [{"Ref": "SubnetPublic"}],
+                "LaunchConfigurationName": {"Ref": "LaunchConfiguration"},
+                "MinSize": "1",
+                "MaxSize": "2",
+                "DesiredCapacity": "1"
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT15M"
+                }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MinInstancesInService": "1",
+                    "MaxBatchSize": "1",
+                    "PauseTime": "PT15M",
+                    "WaitOnResourceSignals": "true"
+                }
+            }
+        },    
+
+        "LaunchConfiguration": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "config": {
+                        
+                        "commands": {
+                            "01_add_instance_to_cluster": {
+                                "command": { "Fn::Join": [ "", [ "#!/bin/bash\n", "echo ECS_CLUSTER=", { "Ref": "EcsCluster" }, " >> /etc/ecs/ecs.config" ] ] }
+                            },
+                            "02_docker_logdriver": {
+                                "command": { "Fn::Join": [ "", [
+                                    "#!/bin/bash\n",
+                                    "echo OPTIONS='\"--default-ulimit nofile=1024:4096 --log-driver awslogs --log-opt awslogs-group=Furiosa --log-opt awslogs-region=",
+                                    { "Ref": "AWS::Region" },
+                                    "\"' >> /etc/sysconfig/docker\n",
+                                    "service docker restart\n"
+                                ] ] }
+                            }
+                        },
+                        
+                        "files": {
+                            "/etc/cfn/cfn-hup.conf": {
+                                "content": { "Fn::Join": ["", [
+                                    "[main]\n",
+                                    "stack=", { "Ref": "AWS::StackId" }, "\n",
+                                    "region=", { "Ref": "AWS::Region" }, "\n"
+                                ]]},
+                                "mode"  : "000400",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": { "Fn::Join": ["", [
+                                    "[cfn-auto-reloader-hook]\n",
+                                    "triggers=post.update\n",
+                                    "path=Resources.LaunchConfiguration.Metadata.AWS::CloudFormation::Init\n",
+                                    "action=/opt/aws/bin/cfn-init -v ",
+                                    "         --stack ", { "Ref": "AWS::StackName" },
+                                    "         --resource LaunchConfiguration ",
+                                    "         --region ", { "Ref": "AWS::Region" }, "\n",
+                                    "runas=root\n"
+                                ]]}
+                            }
+                        },
+
+                        "services": {
+                            "sysvinit": {
+                                "cfn-hup": { "enabled": "true", "ensureRunning": "true", "files": ["/etc/cfn/cfn-hup.conf", "/etc/cfn/hooks.d/cfn-auto-reloader.conf"] }
+                            }
+                        }
+                    }
+                }
+            },
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "ImageId": { "Fn::FindInMap": [ "AWSRegionToAMI", { "Ref": "AWS::Region" }, "AmiId" ] },
+                "InstanceType": { "Ref": "InstanceType" },
+                "IamInstanceProfile": { "Ref": "InstanceProfileServer" },
+                "KeyName": { "Ref": "KeyName" },
+                "SecurityGroups" : [ { "Ref" : "ServerSecurityGroup" } ],
+                "AssociatePublicIpAddress": "true",
+                "UserData": { "Fn::Base64": { "Fn::Join": ["", [
+                    "#!/bin/bash -xe\n",
+                    "echo forceupdate 1\n",
+                    "yum update -y\n",
+                    "yum install -y aws-cfn-bootstrap\n",
+
+                    "/opt/aws/bin/cfn-init -v ",
+                    "         --stack ", { "Ref": "AWS::StackName" },
+                    "         --resource LaunchConfiguration ",
+                    "         --region ", { "Ref": "AWS::Region" }, "\n",
+
+                    "/opt/aws/bin/cfn-signal -e $? ",
+                    "         --stack ", { "Ref": "AWS::StackName" },
+                    "         --resource AutoScalingGroup ",
+                    "         --region ", { "Ref": "AWS::Region" }, "\n"
+                ]]}}
+            }
+        },    
+
+        "RoleServer": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "ecs-service",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ecs:CreateCluster",
+                                        "ecs:RegisterContainerInstance",
+                                        "ecs:DeregisterContainerInstance",
+                                        "ecs:DiscoverPollEndpoint",
+                                        "ecs:StartTelemetrySession",
+                                        "ecs:Submit*",
+                                        "ecs:Poll"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": [
+                                        "dynamodb:*"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        
+        "InstanceProfileServer": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [{"Ref": "RoleServer"}]
+            }
+        },
+
+        "EcsService": {
+            "Type": "AWS::ECS::Service",
+            "Properties": {
+                "Cluster": {"Ref": "EcsCluster"},
+                "DesiredCount": "1",
+                "TaskDefinition": {"Ref":"TaskDefinition"}
+            }
+        },
+        
+        "TaskDefinition": {
+            "Type": "AWS::ECS::TaskDefinition",
+            "Properties": {
+                "ContainerDefinitions": [
+                    {
+                        "Name": "furiosa",
+                        "Cpu": "10",
+                        "Environment": [
+                            {"Name": "BOT_SERVER", "Value": {"Ref": "IrcServer"}},
+                            {"Name": "BOT_CHANNEL", "Value": {"Ref": "IrcChannel"}},
+                            {"Name": "BOT_PORT", "Value": {"Ref": "IrcPort"}},
+                            {"Name": "BOT_NICK", "Value": {"Ref": "IrcNick"}},
+                            {"Name": "BOT_REALNAME", "Value": {"Ref": "IrcRealName"}},
+                            {"Name": "BOT_USERINFO", "Value": {"Ref": "IrcUserInfo"}},
+                            {"Name": "BOT_KICK_LIMIT", "Value": {"Ref": "KickLimit"}},
+                            {"Name": "BOT_KICK_CRON", "Value": {"Ref": "KickCron"}},
+                            {"Name": "BOT_DONT_KICK", "Value": {"Fn::Join": [",", {"Ref": "DontKick"}]}},
+                            {"Name": "BOT_DYNAMODB_TABLE", "Value": {"Ref": "Table"}},
+                            {"Name": "AWS_DEFAULT_REGION", "Value": {"Ref": "AWS::Region"}},
+                            {"Name": "COUNTER", "Value": "5"}
+                        ],
+                        "Essential": "true",
+                        "Image": {"Ref": "BotImage"},
+                        "Memory": "200"
+                    }
+                ]
+            }
+        },
+        "Table": {
+            "Type" : "AWS::DynamoDB::Table",
+            "Properties" : {
+                "AttributeDefinitions" : [{"AttributeName": "id", "AttributeType": "S"}],
+                "KeySchema" : [{"AttributeName": "id", "KeyType": "HASH"}],
+                "ProvisionedThroughput": {"ReadCapacityUnits": "1", "WriteCapacityUnits": "1"}
+            }
+        }
+    },
+    
+    "Outputs": {
+        "EcsService": {
+            "Value": { "Ref": "EcsService" }
+        },
+        "EcsCluster": {
+            "Value": { "Ref": "EcsCluster" }
+        },
+        "TaskDefinition": {
+            "Value": { "Ref": "TaskDefinition" }
+        }
+    }
+}
