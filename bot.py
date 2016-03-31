@@ -21,7 +21,7 @@ BOT_PORT = int(os.environ.get('BOT_PORT', '6667'))
 BOT_NICK = os.environ.get('BOT_NICK', 'furiosa')
 BOT_REALNAME = os.environ.get('BOT_REALNAME', 'imperator')
 BOT_USERINFO = os.environ.get('BOT_USERINFO', 'Imperator Furiosa')
-BOT_KICK_LIMIT = os.environ.get('BOT_KICK_LIMIT', 100)
+BOT_KICK_LIMIT = os.environ.get('BOT_KICK_LIMIT', '100')
 BOT_KICK_CRON = os.environ.get('BOT_KICK_CRON', '* * * * *')
 BOT_DONT_KICK = os.environ.get('BOT_DONT_KICK', 'naked,varpushaukka')
 BOT_DYNAMODB_TABLE = os.environ.get('BOT_DYNAMODB_TABLE')
@@ -138,7 +138,7 @@ class MyPlugin:
             self.penalties = self.storage.load_penalties()
             for n in names['names']: self.update_penalties_for(self.canonnick(n), self.activeset, self.penalties)
             self.storage.save_penalties(self.penalties)
-            self.kick_lurkers()
+            yield from self.kick_lurkers()
             self.activeset = set()
             print(names)
             print(self.penalties)
@@ -150,10 +150,12 @@ class MyPlugin:
         if name in active_nicks: nick_penalties[name] = 0
         else: nick_penalties[name] = nick_penalties.get(name, 0) + 1
 
+    @asyncio.coroutine
     def kick_lurkers(self):
         for name in self.penalties:
-            if self.penalties[name] > BOT_KICK_LIMIT and self.safe_kick(name):
+            if self.penalties[name] > int(BOT_KICK_LIMIT) and self.safe_kick(name):
                 self.bot.kick(BOT_CHANNEL, name, random_message())
+                yield from asyncio.sleep(0.2)
 
     def safe_kick(self, nick):
         if nick == self.bot.nick or nick in self.dontkick: return False
