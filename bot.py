@@ -99,7 +99,7 @@ def random_thing():
     return choice(('pupuista', 'tytöistä', 'pojista', 'kurkuista'))
 
 def random_message():
-    return "Olisit puhunut " + random_thing()
+    return "Olisit puhunut " + random_thing()[:100]
 
 @irc3.plugin
 class MyPlugin:
