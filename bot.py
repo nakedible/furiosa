@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 # TODO:
-# - change debug prints to log
 # - handle failed kicks
 # - check for ops on channel?
 # - track nick changes?
