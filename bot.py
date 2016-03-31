@@ -120,29 +120,31 @@ class MyPlugin:
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def on_privmsg(self, mask=None, data=None, event=None, target=None):
-        print(mask)
-        print(data)
-        print(event)
-        print(target)
+        self.log.debug('%s %s %s %s', event, mask, target, data)
         if target == BOT_CHANNEL:
             self.activeset.add(self.canonnick(mask.nick))
-        print(self.activeset)
-        print(self.bot.nick)
+            self.log.debug('added %s to activeset', self.canonnick(mask.nick))
+            self.log.debug('activeset: %s', self.activeset)
         
     @cron(BOT_KICK_CRON)
     @asyncio.coroutine
     def updatescores(self):
         if self.activeset:
+            self.log.info('discussion detected, listing names')
             names = yield from self.bot.async.names(BOT_CHANNEL)
             nameset = set()
             for n in names['names']: nameset.add(self.canonnick(n))
+            self.log.debug('nameset: %s', nameset)
+            self.log.info('updating penalties')
             self.penalties = self.storage.load_penalties()
             for n in nameset: self.update_penalties_for(n, self.activeset, self.penalties)
             self.storage.save_penalties(self.penalties)
+            self.log.debug('penalties: %s', self.penalties)
+            self.log.info('kicking lurkers')
             yield from self.kick_lurkers(nameset)
             self.activeset = set()
-            print(names)
-            print(self.penalties)
+        else:
+            self.log.info('all quiet on the western front')
 
     def canonnick(self, nickname):
         return nickname.lstrip('@+').lower()
@@ -155,6 +157,7 @@ class MyPlugin:
     def kick_lurkers(self, nameset):
         for name in nameset:
             if self.penalties.get(name, 0) > int(BOT_KICK_LIMIT) and self.safe_kick(name):
+                self.log.info('kicking %s because penalty score %d', name, self.penalties.get(name, 0))
                 self.bot.kick(BOT_CHANNEL, name, random_message())
                 yield from asyncio.sleep(0.2)
 
