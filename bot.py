@@ -15,6 +15,8 @@ BOT_REALNAME = os.environ.get('BOT_REALNAME', 'imperator')
 BOT_USERINFO = os.environ.get('BOT_USERINFO', 'Imperator Furiosa')
 BOT_DYNAMODB_TABLE = os.environ.get('BOT_DYNAMODB_TABLE')
 BOT_STATE_FILE = os.environ.get('BOT_STATE_FILE')
+BOT_KICK_LIMIT = os.environ.get('BOT_KICK_LIMIT', 100)
+BOT_KICK_CRON = os.environ.get('BOT_KICK_CRON', '* * * * *')
 
 ### storage
 
@@ -118,7 +120,7 @@ class MyPlugin:
         print(self.activeset)
         print(self.bot.nick)
         
-    @cron('* * * * *')
+    @cron(BOT_KICK_CRON)
     @asyncio.coroutine
     def updatescores(self):
         if self.activeset:
@@ -140,7 +142,7 @@ class MyPlugin:
 
     def kick_lurkers(self):
         for name in self.penalties:
-            if self.penalties[name] > 1 and self.safe_kick(name): 
+            if self.penalties[name] > BOT_KICK_LIMIT and self.safe_kick(name): 
                 self.bot.kick(BOT_CHANNEL, name, random_message())
 
     def safe_kick(self, nick):
