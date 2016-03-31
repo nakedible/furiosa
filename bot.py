@@ -142,7 +142,7 @@ class MyPlugin:
 
     def kick_lurkers(self):
         for name in self.penalties:
-            if self.penalties[name] > BOT_KICK_LIMIT and self.safe_kick(name): 
+            if self.penalties[name] > BOT_KICK_LIMIT and self.safe_kick(name):
                 self.bot.kick(BOT_CHANNEL, name, random_message())
 
     def safe_kick(self, nick):
