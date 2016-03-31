@@ -135,10 +135,12 @@ class MyPlugin:
     def updatescores(self):
         if self.activeset:
             names = yield from self.bot.async.names(BOT_CHANNEL)
+            nameset = set()
+            for n in names['names']: nameset.add(self.canonnick(n))
             self.penalties = self.storage.load_penalties()
-            for n in names['names']: self.update_penalties_for(self.canonnick(n), self.activeset, self.penalties)
+            for n in nameset: self.update_penalties_for(n, self.activeset, self.penalties)
             self.storage.save_penalties(self.penalties)
-            yield from self.kick_lurkers()
+            yield from self.kick_lurkers(nameset)
             self.activeset = set()
             print(names)
             print(self.penalties)
@@ -151,9 +153,9 @@ class MyPlugin:
         else: nick_penalties[name] = nick_penalties.get(name, 0) + 1
 
     @asyncio.coroutine
-    def kick_lurkers(self):
-        for name in self.penalties:
-            if self.penalties[name] > int(BOT_KICK_LIMIT) and self.safe_kick(name):
+    def kick_lurkers(self, nameset):
+        for name in nameset:
+            if self.penalties.get(name, 0) > int(BOT_KICK_LIMIT) and self.safe_kick(name):
                 self.bot.kick(BOT_CHANNEL, name, random_message())
                 yield from asyncio.sleep(0.2)
 
