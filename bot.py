@@ -22,11 +22,11 @@ BOT_PORT = int(os.environ.get('BOT_PORT', '6667'))
 BOT_NICK = os.environ.get('BOT_NICK', 'furiosa')
 BOT_REALNAME = os.environ.get('BOT_REALNAME', 'imperator')
 BOT_USERINFO = os.environ.get('BOT_USERINFO', 'Imperator Furiosa')
-BOT_DYNAMODB_TABLE = os.environ.get('BOT_DYNAMODB_TABLE')
-BOT_STATE_FILE = os.environ.get('BOT_STATE_FILE')
 BOT_KICK_LIMIT = os.environ.get('BOT_KICK_LIMIT', 100)
 BOT_KICK_CRON = os.environ.get('BOT_KICK_CRON', '* * * * *')
 BOT_DONT_KICK = os.environ.get('BOT_DONT_KICK', 'naked,varpushaukka')
+BOT_DYNAMODB_TABLE = os.environ.get('BOT_DYNAMODB_TABLE')
+BOT_STATE_FILE = os.environ.get('BOT_STATE_FILE')
 
 ### storage
 
