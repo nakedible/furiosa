@@ -5,7 +5,6 @@
 # - handle failed kicks
 # - check for ops on channel?
 # - track nick changes?
-# - kick ratelimit
 # - detect if not on channel?
 
 import asyncio, json, os, signal
