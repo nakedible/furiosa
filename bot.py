@@ -1,5 +1,14 @@
 #!/usr/bin/python3
 
+# TODO:
+# - change debug prints to log
+# - handle failed kicks
+# - check for ops on channel?
+# - track nick changes?
+# - kick ratelimit
+# - detect if not on channel?
+# - track only channel messages in on_privmsg
+
 import asyncio, json, os, signal
 
 import irc3
