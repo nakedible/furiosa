@@ -7,7 +7,6 @@
 # - track nick changes?
 # - kick ratelimit
 # - detect if not on channel?
-# - track only channel messages in on_privmsg
 
 import asyncio, json, os, signal
 
@@ -126,7 +125,8 @@ class MyPlugin:
         print(data)
         print(event)
         print(target)
-        self.activeset.add(self.canonnick(mask.nick))
+        if target == BOT_CHANNEL:
+            self.activeset.add(self.canonnick(mask.nick))
         print(self.activeset)
         print(self.bot.nick)
         
